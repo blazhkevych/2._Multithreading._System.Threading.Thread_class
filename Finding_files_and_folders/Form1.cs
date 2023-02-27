@@ -6,5 +6,10 @@ namespace Finding_files_and_folders
         {
             InitializeComponent();
         }
+
+        private void label3_discs_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
