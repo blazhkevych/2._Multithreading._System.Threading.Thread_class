@@ -30,13 +30,13 @@
         {
             listView1 = new ListView();
             label1_file = new Label();
-            textBox1 = new TextBox();
+            textBox1_file_extension = new TextBox();
             label2_word_or_phrase = new Label();
             label3_discs = new Label();
-            textBox2 = new TextBox();
+            textBox2_words_in_file = new TextBox();
             comboBox1 = new ComboBox();
             button1_find = new Button();
-            button1_stop = new Button();
+            button2_stop = new Button();
             checkBox1_subfolders = new CheckBox();
             label4_search_result = new Label();
             label1 = new Label();
@@ -61,13 +61,14 @@
             label1_file.TabIndex = 1;
             label1_file.Text = "Файл";
             // 
-            // textBox1
+            // textBox1_file_extension
             // 
-            textBox1.Location = new Point(12, 31);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(69, 23);
-            textBox1.TabIndex = 2;
-            textBox1.Text = "*.bmp";
+            textBox1_file_extension.Location = new Point(12, 31);
+            textBox1_file_extension.Name = "textBox1_file_extension";
+            textBox1_file_extension.Size = new Size(69, 23);
+            textBox1_file_extension.TabIndex = 2;
+            textBox1_file_extension.Text = "*.txt";
+            textBox1_file_extension.TextChanged += textBox1_file_extension_TextChanged;
             // 
             // label2_word_or_phrase
             // 
@@ -88,14 +89,14 @@
             label3_discs.Size = new Size(48, 19);
             label3_discs.TabIndex = 4;
             label3_discs.Text = "Диски";
-            label3_discs.Click += label3_discs_Click;
             // 
-            // textBox2
+            // textBox2_words_in_file
             // 
-            textBox2.Location = new Point(87, 31);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(342, 23);
-            textBox2.TabIndex = 5;
+            textBox2_words_in_file.Location = new Point(87, 31);
+            textBox2_words_in_file.Name = "textBox2_words_in_file";
+            textBox2_words_in_file.Size = new Size(342, 23);
+            textBox2_words_in_file.TabIndex = 5;
+            textBox2_words_in_file.TextChanged += textBox2_words_in_file_TextChanged;
             // 
             // comboBox1
             // 
@@ -113,15 +114,17 @@
             button1_find.TabIndex = 7;
             button1_find.Text = "Найти";
             button1_find.UseVisualStyleBackColor = true;
+            button1_find.Click += button1_find_Click;
             // 
-            // button1_stop
+            // button2_stop
             // 
-            button1_stop.Location = new Point(581, 30);
-            button1_stop.Name = "button1_stop";
-            button1_stop.Size = new Size(88, 23);
-            button1_stop.TabIndex = 8;
-            button1_stop.Text = "Остановить";
-            button1_stop.UseVisualStyleBackColor = true;
+            button2_stop.Enabled = false;
+            button2_stop.Location = new Point(581, 30);
+            button2_stop.Name = "button2_stop";
+            button2_stop.Size = new Size(88, 23);
+            button2_stop.TabIndex = 8;
+            button2_stop.Text = "Остановить";
+            button2_stop.UseVisualStyleBackColor = true;
             // 
             // checkBox1_subfolders
             // 
@@ -159,9 +162,9 @@
             label1_number_of_files_found.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
             label1_number_of_files_found.Location = new Point(549, 71);
             label1_number_of_files_found.Name = "label1_number_of_files_found";
-            label1_number_of_files_found.Size = new Size(18, 19);
+            label1_number_of_files_found.Size = new Size(17, 19);
             label1_number_of_files_found.TabIndex = 12;
-            label1_number_of_files_found.Text = "...";
+            label1_number_of_files_found.Text = "0";
             // 
             // Form1
             // 
@@ -172,19 +175,20 @@
             Controls.Add(label1);
             Controls.Add(label4_search_result);
             Controls.Add(checkBox1_subfolders);
-            Controls.Add(button1_stop);
+            Controls.Add(button2_stop);
             Controls.Add(button1_find);
             Controls.Add(comboBox1);
-            Controls.Add(textBox2);
+            Controls.Add(textBox2_words_in_file);
             Controls.Add(label3_discs);
             Controls.Add(label2_word_or_phrase);
-            Controls.Add(textBox1);
+            Controls.Add(textBox1_file_extension);
             Controls.Add(label1_file);
             Controls.Add(listView1);
             MaximizeBox = false;
             MaximumSize = new Size(800, 600);
             MinimumSize = new Size(800, 600);
             Name = "Form1";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Form1";
             ResumeLayout(false);
             PerformLayout();
@@ -194,16 +198,16 @@
 
         private ListView listView1;
         private Label label1_file;
-        private TextBox textBox1;
         private Label label2_word_or_phrase;
         private Label label3_discs;
-        private TextBox textBox2;
         private ComboBox comboBox1;
         private Button button1_find;
-        private Button button1_stop;
+        private Button button2_stop;
         private CheckBox checkBox1_subfolders;
         private Label label4_search_result;
         private Label label1;
         private Label label1_number_of_files_found;
+        private TextBox textBox1_file_extension;
+        private TextBox textBox2_words_in_file;
     }
 }
