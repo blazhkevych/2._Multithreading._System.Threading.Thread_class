@@ -16,6 +16,7 @@ internal class SearchEngine
         RegMask = null;
         CountOfMatchFiles = 0;
         Drives = GetDrives();
+        _lvi = new ListViewItem();
     }
 
     // Путь к файлу.
@@ -37,7 +38,19 @@ internal class SearchEngine
     private Regex RegText { get; set; }
 
     // Количество найденных файлов в данный момент.
-    private ulong CountOfMatchFiles { get; set; }
+    private ulong _countOfMatchFiles;
+
+    public ulong CountOfMatchFiles
+    {
+        get { return _countOfMatchFiles; }
+        set
+        {
+            _countOfMatchFiles = value;
+            CountChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    public event EventHandler CountChanged;
+
 
     // Диски на компьютере.
     public string[] Drives { get; set; }
@@ -103,8 +116,11 @@ internal class SearchEngine
         CountOfMatchFiles++;
     }
 
+    // Поиск в подкаталогах ? да - true, нет - false
+    public bool SearchInSubdirectories { get; set; }
+
     // Метод поиска файлов.
-    private  ulong FindTextInFiles(Regex regText, DirectoryInfo di, Regex regMask)
+    private void FindTextInFiles(Regex regText, DirectoryInfo di, Regex regMask)
     {
         // Поток для чтения из файла
         StreamReader sr = null;
@@ -112,18 +128,12 @@ internal class SearchEngine
         MatchCollection mc = null;
 
         // Количество обработанных файлов
-        ulong CountOfMatchFiles = 0;
+        CountOfMatchFiles = 0;
 
         FileInfo[] fi = null;
-        try
-        {
-            // Получаем список файлов
-            fi = di.GetFiles();
-        }
-        catch
-        {
-            return CountOfMatchFiles;
-        }
+
+        // Получаем список файлов
+        fi = di.GetFiles();
 
         // Перебираем список файлов
         foreach (var f in fi) // поискать desktop.ini
@@ -131,10 +141,10 @@ internal class SearchEngine
             if (regMask.IsMatch(f.Name))
             {
                 // Увеличиваем счетчик
-                ++CountOfMatchFiles; // сделать событие на изменение кол-ва найденных файлов (скорее использовать триггер или что-то из того что тогда изучали)
-                OnAFileWasFoundWithTheGivenMask();
+                CountOfMatchFiles++; // сделать событие на изменение кол-ва найденных файлов (скорее использовать триггер или что-то из того что тогда изучали)
+                //OnAFileWasFoundWithTheGivenMask();
                 // ???????
-
+                AddFileToListView(f);
 
                 //Console.WriteLine("File " + f.Name);
 
@@ -154,14 +164,14 @@ internal class SearchEngine
                 }
             }
 
-        // Получаем список подкаталогов
-        var diSub = di.GetDirectories();
-        // Для каждого из них вызываем (рекурсивно) эту же функцию поиска
-        foreach (var diSubDir in diSub)
-            CountOfMatchFiles += FindTextInFiles(regText, diSubDir, regMask);
-
-        // Возврат количества обработанных файлов
-        return CountOfMatchFiles;
+        if (SearchInSubdirectories == true)
+        {
+            // Получаем список подкаталогов
+            var diSub = di.GetDirectories();
+            // Для каждого из них вызываем (рекурсивно) эту же функцию поиска
+            foreach (var diSubDir in diSub)
+                FindTextInFiles(regText, diSubDir, regMask);
+        }
     }
 
     // Процесс поиска файлов.
@@ -180,26 +190,27 @@ internal class SearchEngine
         // Создаем объект регулярного выражения на основе текста.
         CreateRegEx(Text);
         // Поиск файлов.
-        CountOfMatchFiles = FindTextInFiles(RegText, Di, RegMask);
+        FindTextInFiles(RegText, Di, RegMask);
     }
 
+    public ListViewItem _lvi;
     // Метод добавления файла в список
     private void AddFileToListView(FileInfo f)
     {
         // Создаем новый элемент списка
-        ListViewItem lvi = new ListViewItem();
+        _lvi = new ListViewItem();
 
         // Устанавливаем имя файла
-        lvi.Text = f.Name;
+        _lvi.Text = f.Name;
 
         // Устанавливаем путь к файлу
-        lvi.SubItems.Add(f.DirectoryName);
+        _lvi.SubItems.Add(f.DirectoryName);
 
         // Устанавливаем размер файла
-        lvi.SubItems.Add(f.Length.ToString());
+        _lvi.SubItems.Add(f.Length.ToString());
 
         // Устанавливаем дату создания файла
-        lvi.SubItems.Add(f.LastWriteTime.ToString());
+        _lvi.SubItems.Add(f.LastWriteTime.ToString());
 
         // Добавляем элемент в список
         //listView1.Items.Add(lvi);

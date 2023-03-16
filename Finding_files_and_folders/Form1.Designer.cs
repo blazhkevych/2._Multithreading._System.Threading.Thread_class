@@ -135,6 +135,7 @@
             checkBox1_subfolders.TabIndex = 9;
             checkBox1_subfolders.Text = "Подкаталоги";
             checkBox1_subfolders.UseVisualStyleBackColor = true;
+            checkBox1_subfolders.CheckedChanged += checkBox1_subfolders_CheckedChanged;
             // 
             // label4_search_result
             // 

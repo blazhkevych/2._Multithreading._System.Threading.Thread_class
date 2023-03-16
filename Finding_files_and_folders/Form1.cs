@@ -5,7 +5,7 @@ namespace Finding_files_and_folders;
 public partial class Form1 : Form
 {
     private readonly SearchEngine se = new();
-    public SynchronizationContext uiContext;
+    public SynchronizationContext UiContext;
 
     public Form1()
     {
@@ -14,7 +14,7 @@ public partial class Form1 : Form
         Text = "Поиск файлов и папок";
 
         // Получим контекст синхронизации для текущего потока 
-        uiContext = SynchronizationContext.Current;
+        UiContext = SynchronizationContext.Current;
 
         // Добавляем диски в комбобокс.
         foreach (var drive in se.Drives)
@@ -60,33 +60,32 @@ public partial class Form1 : Form
         ImageList image_list1 = new ImageList();
 
 
-        //se.AFileWasFoundWithTheGivenMask += HandleFileFoundEvent();
+        se.CountChanged += CountChanged;
+
+
+
 
     }
 
-    //private void HandleFileFoundEvent(int number)
-    //{
-    //    if (label1_number_of_files_found.InvokeRequired)
-    //    {
-    //        label1_number_of_files_found.Invoke(new Action<int>(HandleFileFoundEvent), number);
-    //        return;
-    //    }
-
-    //    label1_number_of_files_found.Text = number.ToString();
-    //}
-
+    private void CountChanged(object sender, EventArgs e)
+    {
+        UiContext.Send(d => label1_number_of_files_found.Text = se.CountOfMatchFiles.ToString(), null);
+        //label1.Text = se.CountOfMatchFiles.ToString();
+    }
 
     private void AddItemToListView(string filePath)
     {
-        if (listView1.InvokeRequired)
-        {
-            listView1.Invoke(new Action<string>(AddItemToListView), filePath);
-            return;
-        }
+        //if (listView1.InvokeRequired)
+        //{
+        //    listView1.Invoke(new Action<string>(AddItemToListView), filePath);
+        //    return;
+        //}
 
         // Добавляем файл в ListView1
-        var item = new ListViewItem(filePath);
-        listView1.Items.Add(item);
+        //var item = new ListViewItem(filePath);
+        //listView1.Items.Add(item);
+        UiContext.Send(d => listView1.Items.Add(se._lvi), null);
+
     }
 
     // Кнопка Найти.
@@ -113,7 +112,7 @@ public partial class Form1 : Form
 
         // Создаем фоновый новый поток для поиска
         var thread = new Thread(se.Process);
-
+        thread.IsBackground = true;
         // Запускаем поток
         thread.Start();
     }
@@ -127,6 +126,15 @@ public partial class Form1 : Form
     private void textBox2_words_in_file_TextChanged(object sender, EventArgs e)
     {
         se.Text = textBox2_words_in_file.Text;
+    }
+
+    // Отрабатывает на изменение состояния чекбокса checkBox1_subfolders.
+    private void checkBox1_subfolders_CheckedChanged(object sender, EventArgs e)
+    {
+        if (checkBox1_subfolders.Checked)
+            se.SearchInSubdirectories = true;
+        else
+            se.SearchInSubdirectories = false;
     }
 }
 
