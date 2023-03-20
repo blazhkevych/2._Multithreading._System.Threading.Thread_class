@@ -1,4 +1,4 @@
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Windows.Forms;
 
 namespace Finding_files_and_folders;
 
@@ -56,36 +56,35 @@ public partial class Form1 : Form
         // Установим табличный режим отображения
         listView1.View = View.Details;
 
-        // Список изображений для хранения малых значков
-        ImageList image_list1 = new ImageList();
+        // глубина цвета изображений
+        image_list1.ColorDepth = ColorDepth.Depth32Bit;
+        // установим размер изображения
+        image_list1.ImageSize = new Size(16, 16);
+        // ассоциируем список маленьких изображений с ListView
+        listView1.SmallImageList = image_list1;
+    }
+    // Список изображений для хранения малых значков
+    ImageList image_list1 = new ImageList();
 
-
-        se.CountChanged += CountChanged;
-
-
-
-
+    public string Label1NumberOfFilesFound
+    {
+        get => label1_number_of_files_found.Text;
+        set
+        {
+            var number = int.Parse(label1_number_of_files_found.Text);
+            number++;
+            label1_number_of_files_found.Text = number.ToString();
+        }
     }
 
-    private void CountChanged(object sender, EventArgs e)
+    int _indexIcon = 0;
+    private void AddItemToListView()
     {
-        UiContext.Send(d => label1_number_of_files_found.Text = se.CountOfMatchFiles.ToString(), null);
-        //label1.Text = se.CountOfMatchFiles.ToString();
-    }
-
-    private void AddItemToListView(string filePath)
-    {
-        //if (listView1.InvokeRequired)
-        //{
-        //    listView1.Invoke(new Action<string>(AddItemToListView), filePath);
-        //    return;
-        //}
-
-        // Добавляем файл в ListView1
-        //var item = new ListViewItem(filePath);
-        //listView1.Items.Add(item);
+        Icon icon = Icon.ExtractAssociatedIcon(se._lvi.Tag.ToString());
+        image_list1.Images.Add(icon);
+        se._lvi.ImageIndex = _indexIcon;
+        _indexIcon++;
         UiContext.Send(d => listView1.Items.Add(se._lvi), null);
-
     }
 
     // Кнопка Найти.
@@ -111,10 +110,38 @@ public partial class Form1 : Form
         listView1.Items.Clear();
 
         // Создаем фоновый новый поток для поиска
-        var thread = new Thread(se.Process);
-        thread.IsBackground = true;
+        var thread1 = new Thread(se.Process);
+        thread1.Name = "Поиск файлов и папок";
+        thread1.IsBackground = true;
+        // Сбросить состояние события.
+        se.EventForFileFound.Reset();
         // Запускаем поток
-        thread.Start();
+        thread1.Start();
+
+        while (true)
+            // Если EventForFileFound сигналит, файл найден, увеличиваем счетчик найденных файлов
+            if (se.EventForFileFound.WaitOne(0))
+            {
+                // Увеличиваем счетчик найденных файлов
+                Label1NumberOfFilesFound = label1_number_of_files_found.Text;
+                // Добавляем файл в ListView1
+                AddItemToListView();
+                // Сбросить состояние события.
+                se.EventForFileFound.Reset();
+                // Если событие EventForSearchComplete сигналит, поиск завершен, выходим из цикла и снимаем заблокированный интерфейс
+                if (se.EventForSearchComplete.WaitOne(0))
+                {
+                    button1_find.Enabled = true;
+                    button2_stop.Enabled = false;
+                    checkBox1_subfolders.Enabled = true;
+                    textBox1_file_extension.Enabled = true;
+                    textBox2_words_in_file.Enabled = true;
+                    comboBox1.Enabled = true;
+
+                    se.EventForSearchComplete.Reset();
+                    break;
+                }
+            }
     }
 
     // Отрабатывает на изменение текста в textBox1_file_extension.
@@ -122,6 +149,7 @@ public partial class Form1 : Form
     {
         se.Mask = textBox1_file_extension.Text;
     }
+
     // Отрабатывает на изменение текста в textBox2_words_in_file.
     private void textBox2_words_in_file_TextChanged(object sender, EventArgs e)
     {
@@ -137,6 +165,3 @@ public partial class Form1 : Form
             se.SearchInSubdirectories = false;
     }
 }
-
-// Нажали кнопку Найти и начался поиск в отдельном вторичном фоновом потоке !
-// Обновление статистики в процессе поиска по кол-ву файлов, в том же потоке. Нашел файл и обновил.

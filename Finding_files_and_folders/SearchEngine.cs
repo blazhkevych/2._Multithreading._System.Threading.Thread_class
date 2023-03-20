@@ -14,7 +14,7 @@ internal class SearchEngine
         Text = "";
         Di = new DirectoryInfo(Path);
         RegMask = null;
-        CountOfMatchFiles = 0;
+        //CountOfMatchFiles = 0;
         Drives = GetDrives();
         _lvi = new ListViewItem();
     }
@@ -38,18 +38,18 @@ internal class SearchEngine
     private Regex RegText { get; set; }
 
     // Количество найденных файлов в данный момент.
-    private ulong _countOfMatchFiles;
+    //private ulong _countOfMatchFiles;
 
-    public ulong CountOfMatchFiles
-    {
-        get { return _countOfMatchFiles; }
-        set
-        {
-            _countOfMatchFiles = value;
-            CountChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
-    public event EventHandler CountChanged;
+    //public ulong CountOfMatchFiles
+    //{
+    //    get { return _countOfMatchFiles; }
+    //    set
+    //    {
+    //        _countOfMatchFiles = value;
+    //        CountChanged?.Invoke(this, EventArgs.Empty);
+    //    }
+    //}
+    //public event EventHandler CountChanged;
 
 
     // Диски на компьютере.
@@ -87,10 +87,6 @@ internal class SearchEngine
 
     }
 
-    //private void CreateRegEx()
-    //{
-    //}
-
     // Экранируем спецсимволы во введенном тексте.
     private void EscapeSpecialCharacters(string text)
     {
@@ -101,19 +97,6 @@ internal class SearchEngine
     private void CreateRegEx(string text)
     {
         RegText = Text.Length == 0 ? null : new Regex(Text, RegexOptions.IgnoreCase);
-    }
-
-
-
-
-
-    // Был найден файл по заданной маске
-    //public event Action AFileWasFoundWithTheGivenMask;
-
-    // Метод увеличивает найденное количество файлов на 1
-    private void OnAFileWasFoundWithTheGivenMask()
-    {
-        CountOfMatchFiles++;
     }
 
     // Поиск в подкаталогах ? да - true, нет - false
@@ -127,26 +110,18 @@ internal class SearchEngine
         // Список найденных совпадений
         MatchCollection mc = null;
 
-        // Количество обработанных файлов
-        CountOfMatchFiles = 0;
-
         FileInfo[] fi = null;
 
         // Получаем список файлов
         fi = di.GetFiles();
 
         // Перебираем список файлов
-        foreach (var f in fi) // поискать desktop.ini
+        foreach (var f in fi)
             // Если файл соответствует маске
             if (regMask.IsMatch(f.Name))
             {
-                // Увеличиваем счетчик
-                CountOfMatchFiles++; // сделать событие на изменение кол-ва найденных файлов (скорее использовать триггер или что-то из того что тогда изучали)
-                //OnAFileWasFoundWithTheGivenMask();
-                // ???????
                 AddFileToListView(f);
-
-                //Console.WriteLine("File " + f.Name);
+                EventForFileFound.Set();
 
                 if (regText != null)
                 {
@@ -174,6 +149,10 @@ internal class SearchEngine
         }
     }
 
+    public ManualResetEvent EventForFileFound = new(false);
+    public ManualResetEvent EventForSearchComplete = new(false);
+    //public ManualResetEvent event_for_suspend = new(true);
+
     // Процесс поиска файлов.
     public void Process()
     {
@@ -191,6 +170,8 @@ internal class SearchEngine
         CreateRegEx(Text);
         // Поиск файлов.
         FindTextInFiles(RegText, Di, RegMask);
+        // Поиск завершен.
+        EventForSearchComplete.Set();
     }
 
     public ListViewItem _lvi;
@@ -212,9 +193,7 @@ internal class SearchEngine
         // Устанавливаем дату создания файла
         _lvi.SubItems.Add(f.LastWriteTime.ToString());
 
-        // Добавляем элемент в список
-        //listView1.Items.Add(lvi);
-
-
+        // Полный путь к файлу
+        _lvi.Tag = f.FullName;
     }
 }
