@@ -10,7 +10,7 @@ internal class SearchEngine
     public SearchEngine()
     {
         Path = "C:\\";
-        Mask = "*.txt";
+        Mask = "";
         Text = "";
         Di = new DirectoryInfo(Path);
         RegMask = null;
@@ -36,21 +36,6 @@ internal class SearchEngine
 
     // Объект регулярного выражения на основе текста для поиска текста в файлах.
     private Regex RegText { get; set; }
-
-    // Количество найденных файлов в данный момент.
-    //private ulong _countOfMatchFiles;
-
-    //public ulong CountOfMatchFiles
-    //{
-    //    get { return _countOfMatchFiles; }
-    //    set
-    //    {
-    //        _countOfMatchFiles = value;
-    //        CountChanged?.Invoke(this, EventArgs.Empty);
-    //    }
-    //}
-    //public event EventHandler CountChanged;
-
 
     // Диски на компьютере.
     public string[] Drives { get; set; }
@@ -83,8 +68,6 @@ internal class SearchEngine
         Mask = mask;
         // Создание объекта регулярного выражения на основе маски.
         RegMask = new Regex(Mask, RegexOptions.IgnoreCase);
-
-
     }
 
     // Экранируем спецсимволы во введенном тексте.
@@ -103,7 +86,7 @@ internal class SearchEngine
     public bool SearchInSubdirectories { get; set; }
 
     // Метод поиска файлов.
-    private void FindTextInFiles(Regex regText, DirectoryInfo di, Regex regMask)
+    private void FindTextInFiles(Regex regText/*текст в файле - "А крила має"*/, DirectoryInfo di, Regex regMask/*файл - 1.txt*/)
     {
         // Поток для чтения из файла
         StreamReader sr = null;
@@ -117,15 +100,19 @@ internal class SearchEngine
 
         // Перебираем список файлов
         foreach (var f in fi)
+        {
             // Если файл соответствует маске
             if (regMask.IsMatch(f.Name))
             {
-                AddFileToListView(f);
-                EventForFileFound.Set();
-
-                if (regText != null)
+                CreateListViewItem(f);
+                EventForFileFoundStopThread.Set();
+            }
+            // Поиск текста в файле.
+            if (regText != null)
+            {
+                // Открываем файл
+                try
                 {
-                    // Открываем файл
                     sr = new StreamReader(di.FullName + @"\" + f.Name,
                         Encoding.Default);
                     // Считываем целиком
@@ -134,10 +121,26 @@ internal class SearchEngine
                     sr.Close();
                     // Ищем заданный текст
                     mc = regText.Matches(Content);
-                    // Перебираем список вхождений
-                    foreach (Match m in mc) Console.WriteLine("Текст найден в позиции {0}.", m.Index);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+
+                if (mc.Count > 0)
+                {
+                    CreateListViewItem(f);
+                    EventForFileFoundStopThread.Set();
+                    while (true)
+                    {
+                        if (EventForFileFoundStartThread.WaitOne(0))
+                        {
+                            break;
+                        }
+                    }
                 }
             }
+        }
 
         if (SearchInSubdirectories == true)
         {
@@ -149,9 +152,10 @@ internal class SearchEngine
         }
     }
 
-    public ManualResetEvent EventForFileFound = new(false);
+    public ManualResetEvent EventForFileFoundStartThread = new(false);
+    public ManualResetEvent EventForFileFoundStopThread = new(false);
     public ManualResetEvent EventForSearchComplete = new(false);
-    //public ManualResetEvent event_for_suspend = new(true);
+    //public ManualResetEvent event_for_suspend = new(false);
 
     // Процесс поиска файлов.
     public void Process()
@@ -175,8 +179,8 @@ internal class SearchEngine
     }
 
     public ListViewItem _lvi;
-    // Метод добавления файла в список
-    private void AddFileToListView(FileInfo f)
+    // Создание элемента ListViewItem.
+    private void CreateListViewItem(FileInfo f)
     {
         // Создаем новый элемент списка
         _lvi = new ListViewItem();

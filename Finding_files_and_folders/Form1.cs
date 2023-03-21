@@ -109,25 +109,29 @@ public partial class Form1 : Form
         // Очищаем список
         listView1.Items.Clear();
 
+        // Очищаем список изображений
+        image_list1.Images.Clear();
+
         // Создаем фоновый новый поток для поиска
         var thread1 = new Thread(se.Process);
         thread1.Name = "Поиск файлов и папок";
         thread1.IsBackground = true;
-        // Сбросить состояние события.
-        se.EventForFileFound.Reset();
+        
+        // Сбросить состояние событий
+        se.EventForFileFoundStopThread.Reset();
+        se.EventForSearchComplete.Reset();
+        
         // Запускаем поток
         thread1.Start();
 
         while (true)
-            // Если EventForFileFound сигналит, файл найден, увеличиваем счетчик найденных файлов
-            if (se.EventForFileFound.WaitOne(0))
+            if (se.EventForFileFoundStopThread.WaitOne(0))
             {
+                se.EventForFileFoundStopThread.Reset();
                 // Увеличиваем счетчик найденных файлов
                 Label1NumberOfFilesFound = label1_number_of_files_found.Text;
                 // Добавляем файл в ListView1
                 AddItemToListView();
-                // Сбросить состояние события.
-                se.EventForFileFound.Reset();
                 // Если событие EventForSearchComplete сигналит, поиск завершен, выходим из цикла и снимаем заблокированный интерфейс
                 if (se.EventForSearchComplete.WaitOne(0))
                 {
@@ -137,10 +141,10 @@ public partial class Form1 : Form
                     textBox1_file_extension.Enabled = true;
                     textBox2_words_in_file.Enabled = true;
                     comboBox1.Enabled = true;
-
                     se.EventForSearchComplete.Reset();
                     break;
                 }
+                se.EventForFileFoundStartThread.Set();
             }
     }
 

@@ -67,7 +67,6 @@
             textBox1_file_extension.Name = "textBox1_file_extension";
             textBox1_file_extension.Size = new Size(69, 23);
             textBox1_file_extension.TabIndex = 2;
-            textBox1_file_extension.Text = "*.txt";
             textBox1_file_extension.TextChanged += textBox1_file_extension_TextChanged;
             // 
             // label2_word_or_phrase
