@@ -8,4 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Folder_with_files_for_tests\" />
+  </ItemGroup>
+
 </Project>

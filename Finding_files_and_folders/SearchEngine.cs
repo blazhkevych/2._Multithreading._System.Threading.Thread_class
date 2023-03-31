@@ -105,7 +105,7 @@ internal class SearchEngine
             if (regMask.IsMatch(f.Name))
             {
                 CreateListViewItem(f);
-                EventForFileFoundStopThread.Set();
+                //NewFileFound.Set();
             }
             // Поиск текста в файле.
             if (regText != null)
@@ -130,14 +130,15 @@ internal class SearchEngine
                 if (mc.Count > 0)
                 {
                     CreateListViewItem(f);
-                    EventForFileFoundStopThread.Set();
-                    while (true)
-                    {
-                        if (EventForFileFoundStartThread.WaitOne(0))
-                        {
-                            break;
-                        }
-                    }
+                    NewFileFound.Set();
+                    ContinueSearching.WaitOne();
+                    //while (true)
+                    //{
+                    //    if (ContinueSearching.WaitOne(0))
+                    //    {
+                    //        break;
+                    //    }
+                    //}
                 }
             }
         }
@@ -152,8 +153,8 @@ internal class SearchEngine
         }
     }
 
-    public ManualResetEvent EventForFileFoundStartThread = new(false);
-    public ManualResetEvent EventForFileFoundStopThread = new(false);
+    public ManualResetEvent ContinueSearching = new(false);
+    public ManualResetEvent NewFileFound = new(false);
     public ManualResetEvent EventForSearchComplete = new(false);
     //public ManualResetEvent event_for_suspend = new(false);
 

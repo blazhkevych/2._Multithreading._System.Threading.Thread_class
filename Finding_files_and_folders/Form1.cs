@@ -116,36 +116,36 @@ public partial class Form1 : Form
         var thread1 = new Thread(se.Process);
         thread1.Name = "Поиск файлов и папок";
         thread1.IsBackground = true;
-        
+
         // Сбросить состояние событий
-        se.EventForFileFoundStopThread.Reset();
+        se.NewFileFound.Reset();
         se.EventForSearchComplete.Reset();
-        
+
         // Запускаем поток
         thread1.Start();
 
         while (true)
-            if (se.EventForFileFoundStopThread.WaitOne(0))
+        {
+            se.NewFileFound.WaitOne();
+            // Увеличиваем счетчик найденных файлов
+            Label1NumberOfFilesFound = label1_number_of_files_found.Text;
+            // Добавляем файл в ListView1
+            AddItemToListView();
+            // Если событие EventForSearchComplete сигналит, поиск завершен, выходим из цикла и снимаем заблокированный интерфейс
+            if (se.EventForSearchComplete.WaitOne(0))
             {
-                se.EventForFileFoundStopThread.Reset();
-                // Увеличиваем счетчик найденных файлов
-                Label1NumberOfFilesFound = label1_number_of_files_found.Text;
-                // Добавляем файл в ListView1
-                AddItemToListView();
-                // Если событие EventForSearchComplete сигналит, поиск завершен, выходим из цикла и снимаем заблокированный интерфейс
-                if (se.EventForSearchComplete.WaitOne(0))
-                {
-                    button1_find.Enabled = true;
-                    button2_stop.Enabled = false;
-                    checkBox1_subfolders.Enabled = true;
-                    textBox1_file_extension.Enabled = true;
-                    textBox2_words_in_file.Enabled = true;
-                    comboBox1.Enabled = true;
-                    se.EventForSearchComplete.Reset();
-                    break;
-                }
-                se.EventForFileFoundStartThread.Set();
+                button1_find.Enabled = true;
+                button2_stop.Enabled = false;
+                checkBox1_subfolders.Enabled = true;
+                textBox1_file_extension.Enabled = true;
+                textBox2_words_in_file.Enabled = true;
+                comboBox1.Enabled = true;
+                se.EventForSearchComplete.Reset();
+                break;
             }
+            se.NewFileFound.Reset();
+            se.ContinueSearching.Set();
+        }
     }
 
     // Отрабатывает на изменение текста в textBox1_file_extension.
